@@ -6,8 +6,6 @@ from cloudshell.devices.cli_handler_impl import CliHandlerImpl
 
 from cloudshell.firewall.a10.cli.a10_command_modes import DefaultCommandMode, EnableCommandMode, \
     ConfigCommandMode
-from cloudshell.firewall.a10.sessions.console_ssh_session import ConsoleSSHSession
-from cloudshell.firewall.a10.sessions.console_telnet_session import ConsoleTelnetSession
 
 
 class A10CliHandler(CliHandlerImpl):
@@ -27,43 +25,13 @@ class A10CliHandler(CliHandlerImpl):
     def config_mode(self):
         return self.modes[ConfigCommandMode]
 
-    def _console_ssh_session(self):
-        console_port = int(self.resource_config.console_port)
-        session = ConsoleSSHSession(self.resource_config.console_server_ip_address,
-                                    self.username,
-                                    self.password,
-                                    console_port,
-                                    self.on_session_start)
-        return session
-
-    def _console_telnet_session(self):
-        console_port = int(self.resource_config.console_port)
-        return [ConsoleTelnetSession(self.resource_config.console_server_ip_address,
-                                     self.username,
-                                     self.password,
-                                     console_port,
-                                     self.on_session_start),
-                ConsoleTelnetSession(self.resource_config.console_server_ip_address,
-                                     self.username,
-                                     self.password,
-                                     console_port,
-                                     self.on_session_start,
-                                     start_with_new_line=True)
-                ]
-
     def _new_sessions(self):
         if self.cli_type.lower() == SSHSession.SESSION_TYPE.lower():
             new_sessions = self._ssh_session()
         elif self.cli_type.lower() == TelnetSession.SESSION_TYPE.lower():
             new_sessions = self._telnet_session()
-        elif self.cli_type.lower() == 'console':
-            new_sessions = list()
-            new_sessions.append(self._console_ssh_session())
-            new_sessions.extend(self._console_telnet_session())
         else:
-            new_sessions = [self._ssh_session(), self._telnet_session(),
-                            self._console_ssh_session()]
-            new_sessions.extend(self._console_telnet_session())
+            new_sessions = [self._ssh_session(), self._telnet_session()]
         return new_sessions
 
     def on_session_start(self, session, logger):
