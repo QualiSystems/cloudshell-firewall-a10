@@ -6,6 +6,8 @@ from cloudshell.devices.autoload.autoload_builder import AutoloadDetailsBuilder,
 from cloudshell.devices.standards.firewall.autoload_structure import GenericResource, \
     GenericChassis, GenericPort, GenericPortChannel, GenericPowerPort
 
+from cloudshell.firewall.a10.helpers.exceptions import A10Exception
+
 
 class A10SNMPAutoload(object):
     VENDOR = 'A10'
@@ -31,7 +33,7 @@ class A10SNMPAutoload(object):
         """
 
         if not self._is_valid_device_os(supported_os):
-            raise Exception(self.__class__.__name__, 'Unsupported device OS')
+            raise A10Exception('Unsupported device OS')
 
         self.logger.info('*' * 70)
         self.logger.info('Start SNMP discovery process .....')
