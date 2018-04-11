@@ -1,4 +1,5 @@
 from cloudshell.devices.flows.action_flows import SaveConfigurationFlow
+
 from cloudshell.firewall.a10.command_actions.system_actions import SystemActions
 
 
@@ -14,9 +15,13 @@ class A10SaveFlow(SaveConfigurationFlow):
         :rtype: str
         """
 
+        self._logger.info('Start saving configuration')
+
         if not configuration_type.endswith('-config'):
             configuration_type += '-config'
 
         with self._cli_handler.get_cli_service(self._cli_handler.config_mode) as config_session:
             save_action = SystemActions(config_session, self._logger)
             save_action.copy(configuration_type, folder_path)
+
+        self._logger.info('Configuration successfully saved')
