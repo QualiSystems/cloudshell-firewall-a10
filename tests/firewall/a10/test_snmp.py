@@ -608,3 +608,80 @@ class TestSnmpAutoload(BaseA10TestCase):
             '^Unsupported device OS$',
             self.runner.discover,
         )
+
+    @patch('cloudshell.devices.snmp_handler.QualiSnmp')
+    def test_wrong_os_version_and_model(self, snmp_mock):
+        property_map = {
+            ('SNMPv2-MIB', 'sysDescr', '0'):
+                'Thunder Series Unified Application Service Gateway vThunder, ACOS ',
+            ('SNMPv2-MIB', 'sysContact', '0'): 'admin',
+            ('SNMPv2-MIB', 'sysName', '0'): 'A10',
+            ('SNMPv2-MIB', 'sysLocation', '0'): 'somewhere',
+            ('SNMPv2-MIB', 'sysObjectID', '0'): 'A10-COMMON-MIB::',
+            ('A10-AX-MIB', 'axSysSerialNumber', 0): '12345678',
+        }
+        table_map = {
+            ('A10-AX-MIB', 'axInterfaceTable'): {},
+            ('IP-MIB', 'ipAddrTable'): {},
+            ('IPV6-MIB', 'ipv6AddrPfxLength'): {},
+            ('A10-AX-MIB', 'axTrunkTable'): {},
+            ('A10-AX-MIB', 'axTrunkCfgMemberTable'): {},
+            ('A10-AX-MIB', 'axPowerSupplyStatus'): {},
+            ('LLDP-MIB', 'lldpRemSysName'): {},
+            ('LLDP-MIB', 'lldpLocPortDesc'): {},
+        }
+
+        snmp_mock().get_property.side_effect = lambda *args: property_map[args]
+        snmp_mock().get_table.side_effect = lambda *args: table_map[args]
+
+        details = self.runner.discover()
+
+        model = os_version = None
+        for attr in details.attributes:
+            if attr.relative_address == '':
+                if attr.attribute_name == 'Model':
+                    model = attr.attribute_value
+                elif attr.attribute_name == 'OS Version':
+                    os_version = attr.attribute_value
+
+        self.assertEqual('', model)
+        self.assertEqual('', os_version)
+
+    @patch('cloudshell.devices.snmp_handler.QualiSnmp')
+    def test_adjacent(self, snmp_mock):
+        property_map = {
+            ('SNMPv2-MIB', 'sysDescr', '0'):
+                'Thunder Series Unified Application Service Gateway vThunder, ACOS 4.1.0-P10,',
+            ('SNMPv2-MIB', 'sysContact', '0'): 'admin',
+            ('SNMPv2-MIB', 'sysName', '0'): 'A10',
+            ('SNMPv2-MIB', 'sysLocation', '0'): 'somewhere',
+            ('SNMPv2-MIB', 'sysObjectID', '0'): 'A10-COMMON-MIB::a10AX.13',
+            ('A10-AX-MIB', 'axSysSerialNumber', 0): '12345678',
+            ('IF-MIB', 'ifType', 1): "'ethernetCsmacd'",
+            ('LLDP-MIB', 'lldpRemPortDesc', '12.50.1.12'): 'Ethernet 12'
+        }
+        table_map = {
+            ('A10-AX-MIB', 'axInterfaceTable'): {
+                1: {'axInterfaceMediaMaxSpeed': '10000', 'suffix': '1',
+                    'axInterfaceAdminStatus': "'true'", 'axInterfaceIndex': '1',
+                    'axInterfaceMediaMaxDuplex': "'auto'",
+                    'axInterfaceFlowCtrlAdminStatus': "'disabled'", 'axInterfaceMtu': '1500',
+                    'axInterfaceMediaActiveDuplex': "'full'", 'axInterfaceName': 'Ethernet 1',
+                    'axInterfaceStatus': "'up'", 'axInterfaceMediaActiveSpeed': '10000',
+                    'axInterfaceAlias': '', 'axInterfaceMacAddr': '52:54:00:97:83:4e',
+                    'axInterfaceFlowCtrlOperStatus': "'false'"}},
+            ('IP-MIB', 'ipAddrTable'): {},
+            ('IPV6-MIB', 'ipv6AddrPfxLength'): {},
+            ('A10-AX-MIB', 'axTrunkTable'): {},
+            ('A10-AX-MIB', 'axTrunkCfgMemberTable'): {},
+            ('A10-AX-MIB', 'axPowerSupplyStatus'): {},
+            ('LLDP-MIB', 'lldpRemSysName'): {
+                '12.50.1.12': {'lldpRemSysName': 'Other_device'}},
+            ('LLDP-MIB', 'lldpLocPortDesc'): {
+                '50.1': {'lldpLocPortDesc': 'Ethernet 1'}},
+        }
+
+        snmp_mock().get_property.side_effect = lambda *args: property_map[args]
+        snmp_mock().get_table.side_effect = lambda *args: table_map[args]
+
+        self.runner.discover()
