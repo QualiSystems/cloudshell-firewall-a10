@@ -14,7 +14,10 @@ class TestSaveConfig(BaseA10TestCase):
             self.logger, self.resource_config, self.api, self.cli_handler)
 
     def setUp(self):
-        self._setUp()
+        self._setUp({
+            'Backup Location': '',
+            'Backup Type': A10ConfigurationRunner.DEFAULT_FILE_SYSTEM,
+        })
 
     @patch('cloudshell.cli.session.ssh_session.SSHSession._receive_all')
     @patch('cloudshell.cli.session.ssh_session.SSHSession.send_line')
@@ -102,5 +105,26 @@ class TestSaveConfig(BaseA10TestCase):
             ftp_server,
             configuration_type,
         )
+
+        emu.check_calls()
+
+    @patch('cloudshell.cli.session.ssh_session.SSHSession._receive_all')
+    @patch('cloudshell.cli.session.ssh_session.SSHSession.send_line')
+    def test_save_to_device(self, send_mock, recv_mock):
+        path = ''
+        configuration_type = 'running'
+
+        emu = CliEmulator([
+            Command('configure', CONFIG_PROMPT),
+            Command(
+                'copy {0}-config A10-{0}-\d+-\d+'.format(configuration_type),
+                '.\nFile copied successfully.\n{}'.format(CONFIG_PROMPT),
+                regexp=True,
+            ),
+        ])
+        send_mock.side_effect = emu.send_line
+        recv_mock.side_effect = emu.receive_all
+
+        self.runner.save(path, configuration_type)
 
         emu.check_calls()

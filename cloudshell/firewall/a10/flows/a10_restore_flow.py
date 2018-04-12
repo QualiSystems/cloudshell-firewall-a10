@@ -1,3 +1,5 @@
+import re
+
 from cloudshell.devices.flows.action_flows import RestoreConfigurationFlow
 
 from cloudshell.firewall.a10.command_actions.system_actions import SystemActions
@@ -20,6 +22,8 @@ class A10RestoreFlow(RestoreConfigurationFlow):
 
         if not configuration_type.endswith('-config'):
             configuration_type += '-config'
+
+        path = re.sub(r'^local:/+', '', path)
 
         if restore_method == 'append':
             raise A10Exception('Device doesn\'t support append restore method')

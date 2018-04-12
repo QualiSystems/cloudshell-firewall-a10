@@ -15,4 +15,4 @@ class A10ConfigurationRunner(ConfigurationRunner):
 
     @property
     def file_system(self):
-        return 'flash:'
+        return 'local:'

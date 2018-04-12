@@ -15,7 +15,10 @@ class TestRestoreConfig(BaseA10TestCase):
             self.logger, self.resource_config, self.api, self.cli_handler)
 
     def setUp(self):
-        self._setUp()
+        self._setUp({
+            'Backup Location': 'Test-running-100418-163658',
+            'Backup Type': A10ConfigurationRunner.DEFAULT_FILE_SYSTEM,
+        })
 
     @patch('cloudshell.cli.session.ssh_session.SSHSession._receive_all')
     @patch('cloudshell.cli.session.ssh_session.SSHSession.send_line')
@@ -117,3 +120,24 @@ class TestRestoreConfig(BaseA10TestCase):
             configuration_type,
             restore_method,
         )
+
+    @patch('cloudshell.cli.session.ssh_session.SSHSession._receive_all')
+    @patch('cloudshell.cli.session.ssh_session.SSHSession.send_line')
+    def test_restore_from_device(self, send_mock, recv_mock):
+        file_name = 'test-running-100418-163658'  # we get path in lowercase
+        configuration_type = 'startup'
+
+        emu = CliEmulator([
+            Command('configure', CONFIG_PROMPT),
+            Command(
+                'copy {} {}-config'.format(file_name, configuration_type),
+                'Profile exists. Do you wish to overwrite this profile (N/Y)?:'
+            ),
+            Command('y', '.\nFile copied successfully.\n{}'.format(CONFIG_PROMPT))
+        ])
+        send_mock.side_effect = emu.send_line
+        recv_mock.side_effect = emu.receive_all
+
+        self.runner.restore('', configuration_type)
+
+        emu.check_calls()
