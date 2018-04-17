@@ -1,8 +1,14 @@
 from cloudshell.cli.command_mode import CommandMode
 
+from cloudshell.firewall.a10.helpers.exceptions import A10Exception
 
-class DefaultCommandMode(CommandMode):
-    PROMPT = r'(\n|\r|^)[^>#]+?>\s*$'
+
+class A10LoadingException(A10Exception):
+    """Device is not ready"""
+
+
+class LoadingCommandMode(CommandMode):
+    PROMPT = r'(?i)(\n|\r|^)[^>#]+?\(loading\)[>#]\s*$'
     ENTER_COMMAND = ''
     EXIT_COMMAND = ''
 
@@ -11,11 +17,32 @@ class DefaultCommandMode(CommandMode):
 
         self.resource_config = resource_config
         self._api = api
-        CommandMode.__init__(self, self.PROMPT, self.ENTER_COMMAND, self.EXIT_COMMAND)
+        super(LoadingCommandMode, self).__init__(
+            self.PROMPT,
+            self.ENTER_COMMAND,
+            self.EXIT_COMMAND,
+            enter_actions=self.__enter_actions
+        )
+
+    def __enter_actions(self, cli_service):
+        raise A10LoadingException()
+
+
+class DefaultCommandMode(CommandMode):
+    PROMPT = r'(\n|\r|^)((?!\((?i)(loading|#|>)).)+?>\s*$'
+    ENTER_COMMAND = ''
+    EXIT_COMMAND = ''
+
+    def __init__(self, resource_config, api):
+        """Initialize Default command mode - default command mode for A10 Shells"""
+
+        self.resource_config = resource_config
+        self._api = api
+        super(DefaultCommandMode, self).__init__(self.PROMPT, self.ENTER_COMMAND, self.EXIT_COMMAND)
 
 
 class EnableCommandMode(CommandMode):
-    PROMPT = r'(\n|\r|^)((?!\(config).)+?#\s*$'
+    PROMPT = r'(\n|\r|^)((?!\((?i)(loading|config|>|#)).)+?#\s*$'
     ENTER_COMMAND = 'enable'
     EXIT_COMMAND = 'exit'
 
@@ -26,8 +53,7 @@ class EnableCommandMode(CommandMode):
         self._api = api
         self._enable_password = None
 
-        CommandMode.__init__(
-            self,
+        super(EnableCommandMode, self).__init__(
             self.PROMPT,
             self.ENTER_COMMAND,
             self.EXIT_COMMAND,
@@ -55,13 +81,15 @@ class ConfigCommandMode(CommandMode):
 
         self.resource_config = resource_config
         self._api = api
-        CommandMode.__init__(self, self.PROMPT, self.ENTER_COMMAND, self.EXIT_COMMAND)
+        super(ConfigCommandMode, self).__init__(self.PROMPT, self.ENTER_COMMAND, self.EXIT_COMMAND)
 
 
 CommandMode.RELATIONS_DICT = {
-    DefaultCommandMode: {
-        EnableCommandMode: {
-            ConfigCommandMode: {},
+    LoadingCommandMode: {
+        DefaultCommandMode: {
+            EnableCommandMode: {
+                ConfigCommandMode: {},
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ from mock import create_autospec, MagicMock
 
 from cloudshell.firewall.a10.cli.a10_cli_handler import A10CliHandler as CliHandler
 
+LOADING_PROMPT = 'vThunder(LOADING)>'
 DEFAULT_PROMPT = 'vThunder(NOLICENSE)>'
 ENABLE_PROMPT = 'vThunder(NOLICENSE)#'
 ENABLE_PASSWORD = 'enable_password'
@@ -29,7 +30,6 @@ class Command(object):
 class CliEmulator(object):
     def __init__(self, commands=None):
         self.request = None
-        self.previous_resp = None
 
         self.commands = deque([
             Command(None, DEFAULT_PROMPT),
@@ -58,7 +58,10 @@ class CliEmulator(object):
             raise KeyError('Unexpected request - "{}"\n'
                            'Expected - "{}"'.format(self.request, command.request))
 
-        return command.response
+        if isinstance(command.response, Exception):
+            raise command.response
+        else:
+            return command.response
 
     def receive_all(self, timeout, logger):
         return self._get_response()

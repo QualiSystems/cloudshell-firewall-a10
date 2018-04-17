@@ -1,3 +1,6 @@
+import time
+from logging import Logger
+
 from cloudshell.cli.cli_service_impl import CliServiceImpl
 from cloudshell.cli.command_mode_helper import CommandModeHelper
 from cloudshell.cli.session.ssh_session import SSHSession
@@ -5,7 +8,7 @@ from cloudshell.cli.session.telnet_session import TelnetSession
 from cloudshell.devices.cli_handler_impl import CliHandlerImpl
 
 from cloudshell.firewall.a10.cli.a10_command_modes import DefaultCommandMode, EnableCommandMode, \
-    ConfigCommandMode
+    ConfigCommandMode, A10LoadingException
 
 
 class A10CliHandler(CliHandlerImpl):
@@ -35,10 +38,21 @@ class A10CliHandler(CliHandlerImpl):
         return new_sessions
 
     def on_session_start(self, session, logger):
-        """Send default commands to configure/clear session outputs"""
+        """Send default commands to configure/clear session outputs
 
-        cli_service = CliServiceImpl(session=session, command_mode=self.enable_mode, logger=logger)
-        cli_service.send_command('terminal length 0')
-        cli_service.send_command('terminal width 300')
-        with cli_service.enter_mode(self.config_mode) as config_session:
-            config_session.send_command('logging console disable')
+        :param SSHSession|TelnetSession session:
+        :param Logger logger:
+        """
+
+        try:
+            cli_service = CliServiceImpl(session, self.enable_mode, logger)
+        except A10LoadingException:
+            time.sleep(3)
+            prompts_re = r'|'.join(
+                CommandModeHelper.defined_modes_by_prompt(self.enable_mode).keys())
+            session.reconnect(prompts_re, logger)
+        else:
+            cli_service.send_command('terminal length 0')
+            cli_service.send_command('terminal width 300')
+            with cli_service.enter_mode(self.config_mode) as config_session:
+                config_session.send_command('logging console disable')
