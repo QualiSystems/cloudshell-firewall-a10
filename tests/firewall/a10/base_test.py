@@ -3,8 +3,8 @@ from collections import deque
 from unittest import TestCase
 
 from cloudshell.devices.driver_helper import get_cli
-from cloudshell.devices.standards.networking.configuration_attributes_structure import \
-    create_networking_resource_from_context
+from cloudshell.devices.standards.firewall.configuration_attributes_structure import \
+    create_firewall_resource_from_context
 from cloudshell.shell.core.driver_context import ResourceCommandContext, ResourceContextDetails
 from mock import create_autospec, MagicMock
 
@@ -102,9 +102,21 @@ class BaseA10TestCase(TestCase):
 
         return context
 
+    @staticmethod
+    def _set_snmp_v3_protocols(resource_config, attrs):
+        # for now FirewallResource doesn't support auth and priv protocol but we do
+        resource_config.snmp_v3_auth_protocol = attrs.get(
+            'SNMP V3 Authentication Protocol', 'No Authentication Protocol')
+        resource_config.snmp_v3_priv_protocol = attrs.get(
+            'SNMP V3 Privacy Protocol', 'No Privacy Protocol')
+
     def _setUp(self, attrs=None):
-        self.resource_config = create_networking_resource_from_context(
+        if attrs is None:
+            attrs = {}
+
+        self.resource_config = create_firewall_resource_from_context(
             self.SHELL_NAME, ['ACOS'], self.create_context(attrs))
+        self._set_snmp_v3_protocols(self.resource_config, attrs)
         self._cli = get_cli(int(self.resource_config.sessions_concurrency_limit))
 
         self.logger = MagicMock()
