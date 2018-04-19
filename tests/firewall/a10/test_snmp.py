@@ -10,6 +10,7 @@ from tests.firewall.a10.base_test import BaseA10TestCase, CliEmulator, Command, 
 @patch('cloudshell.firewall.a10.flows.a10_autoload_flow.A10SNMPAutoload', MagicMock())
 @patch('cloudshell.cli.session.ssh_session.paramiko', MagicMock())
 @patch('cloudshell.cli.session.ssh_session.SSHSession._clear_buffer', MagicMock(return_value=''))
+@patch('time.sleep', MagicMock())
 class TestEnableDisableSnmp(BaseA10TestCase):
 
     def _setUp(self, attrs=None):

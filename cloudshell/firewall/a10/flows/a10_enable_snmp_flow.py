@@ -1,3 +1,4 @@
+import time
 from logging import Logger
 
 from cloudshell.devices.cli_handler_impl import CliHandlerImpl
@@ -18,7 +19,9 @@ class A10EnableSnmpFlow(EnableSnmpFlow):
         else:
             Flow = A10EnableSnmpV2
 
-        return Flow(self._cli_handler, self._logger, snmp_param).execute()
+        Flow(self._cli_handler, self._logger, snmp_param).execute()
+
+        time.sleep(5)  # wait for enabling snmp
 
 
 class A10EnableSnmpV2(object):
