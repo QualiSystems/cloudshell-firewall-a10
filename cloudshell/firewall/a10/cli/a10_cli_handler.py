@@ -47,10 +47,8 @@ class A10CliHandler(CliHandlerImpl):
         try:
             cli_service = CliServiceImpl(session, self.enable_mode, logger)
         except A10LoadingException:
-            time.sleep(3)
-            prompts_re = r'|'.join(
-                CommandModeHelper.defined_modes_by_prompt(self.enable_mode).keys())
-            session.reconnect(prompts_re, logger)
+            time.sleep(5)
+            raise
         else:
             cli_service.send_command('terminal length 0')
             cli_service.send_command('terminal width 300')
