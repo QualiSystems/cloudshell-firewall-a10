@@ -1,6 +1,6 @@
 import re
 
-from cloudshell.cli.cli_service_impl import CliServiceImpl as CliService
+from cloudshell.cli.cli_service import CliService
 from cloudshell.cli.command_template.command_template_executor import CommandTemplateExecutor
 
 from cloudshell.firewall.a10.command_templates import enable_disable_snmp
@@ -134,7 +134,7 @@ class EnableDisableSnmpV3Actions(object):
             (True, True): 'priv',
         }[auth, priv]
 
-    def __create_remove_group(self, remove=True):
+    def __create_remove_group(self, remove=False):
         kwargs = {
             'group': self.GROUP,
             'view': self.VIEW,

@@ -54,7 +54,7 @@ class CliEmulator(object):
             raise IndexError('Not expected request "{}"'.format(self.request))
 
         if not (not command.regexp and command.request == self.request
-                or re.search(command.request, self.request)):
+                or command.regexp and re.search(command.request, self.request)):
             raise KeyError('Unexpected request - "{}"\n'
                            'Expected - "{}"'.format(self.request, command.request))
 

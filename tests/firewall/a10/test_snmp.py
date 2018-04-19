@@ -39,7 +39,9 @@ class TestEnableDisableSnmp(BaseA10TestCase):
         emu = CliEmulator([
             Command('configure', CONFIG_PROMPT),
             Command('snmp-server enable service', CONFIG_PROMPT),
-            Command('snmp-server SNMPv1-v2c user quali', 'vThunder(config-user:quali)(NOLICENSE)#'),
+            Command(
+                'snmp-server SNMPv1-v2c user quali_user',
+                'vThunder(config-user:quali)(NOLICENSE)#'),
             Command('community read public', 'vThunder(config-user:quali)(NOLICENSE)#'),
             Command('exit', CONFIG_PROMPT),
         ])
@@ -69,7 +71,7 @@ class TestEnableDisableSnmp(BaseA10TestCase):
 
         emu = CliEmulator([
             Command('configure', CONFIG_PROMPT),
-            Command('no snmp-server SNMPv1-v2c user quali', CONFIG_PROMPT),
+            Command('no snmp-server SNMPv1-v2c user quali_user', CONFIG_PROMPT),
         ])
         send_mock.side_effect = emu.send_line
         recv_mock.side_effect = emu.receive_all
