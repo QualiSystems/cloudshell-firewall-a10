@@ -21,7 +21,7 @@ class A10EnableSnmpFlow(EnableSnmpFlow):
 
         Flow(self._cli_handler, self._logger, snmp_param).execute()
 
-        time.sleep(5)  # wait for enabling snmp
+        time.sleep(15)  # wait for enabling snmp
 
 
 class A10EnableSnmpV2(object):
